@@ -1,0 +1,16 @@
+# User-specific stuff
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# IntelliJ
+out/
+
+# Compiled class file
+*.class
+
+.gradle
+gradle/
+build/
+libs/
