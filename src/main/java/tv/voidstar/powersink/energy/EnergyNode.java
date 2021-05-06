@@ -1,11 +1,15 @@
 package tv.voidstar.powersink.energy;
 
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.common.MinecraftForge;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
-import tv.voidstar.powersink.PowerSinkData;
+import tv.voidstar.powersink.PowerSink;
+import tv.voidstar.powersink.Util;
 import tv.voidstar.powersink.energy.compat.EnergyType;
 
 import java.util.Optional;
@@ -21,6 +25,13 @@ public abstract class EnergyNode {
     @Setting
     protected EnergyType energyType = null;
 
+    EnergyNode(Location<World> location, UUID playerOwner, EnergyType energyType) {
+        this.location = location;
+        this.playerOwner = playerOwner;
+        this.energyType = energyType;
+        fetchTileEntity();
+    }
+
     EnergyNode(Location<World> location, UUID playerOwner, EnergyType energyType, TileEntity tileEntity) {
         this.location = location;
         this.playerOwner = playerOwner;
@@ -28,10 +39,8 @@ public abstract class EnergyNode {
         this.tileEntity = tileEntity;
     }
 
-    EnergyNode(Location<World> location, UUID playerOwner, EnergyType energyType) {
-        this.location = location;
-        this.playerOwner = playerOwner;
-        this.energyType = energyType;
+    EnergyNode() {
+
     }
 
     public Location<World> getLocation() {
@@ -50,13 +59,16 @@ public abstract class EnergyNode {
         return Optional.ofNullable(tileEntity);
     }
 
-    public void setTileEntity(TileEntity tileEntity) {
-        this.tileEntity = tileEntity;
+    public void fetchTileEntity() {
+        Optional<Integer> dimID = Util.dimensionIDFromSpongeLocation(location);
+        if (dimID.isPresent()) {
+            this.tileEntity = DimensionManager.getWorld(dimID.get()).getTileEntity(Util.forgeBlockPosFromSpongeLocation(location));
+        } else {
+            PowerSink.getLogger().error("Unable to get Forge TileEntity for EnergyNode at {}", location.toString());
+            // TODO: throw something?
+        }
     }
 
     public abstract void handleEnergyTick();
 
-    public EnergyNode build() {
-
-    }
 }

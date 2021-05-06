@@ -1,16 +1,13 @@
 package tv.voidstar.powersink;
 
 import com.google.common.reflect.TypeToken;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.Event;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
-import ninja.leaping.configurate.commented.CommentedConfigurationNode;
+import ninja.leaping.configurate.gson.GsonConfigurationLoader;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
-import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection;
-import ninja.leaping.configurate.objectmapping.serialize.TypeSerializers;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
@@ -18,7 +15,6 @@ import tv.voidstar.powersink.energy.compat.EnergyType;
 import tv.voidstar.powersink.energy.EnergyNode;
 import tv.voidstar.powersink.energy.EnergySink;
 import tv.voidstar.powersink.energy.EnergySource;
-import tv.voidstar.powersink.event.RegisterNodeEvent;
 import tv.voidstar.powersink.serializer.EnergyTypeSerializer;
 
 import java.io.File;
@@ -28,78 +24,87 @@ import java.util.*;
 public class PowerSinkData {
     private static File energynodesFile;
     private static File cmdsDir;
-    private static ConfigurationNode energynodesRoot;
-    private static ConfigurationLoader<CommentedConfigurationNode> loader;
+    private static ConfigurationNode energyNodesList;
+    private static ConfigurationOptions options;
+    private static @NonNull HoconConfigurationLoader loader;
     private static Map<Location<World>, EnergyNode> energyNodes = new HashMap<>();
     private static Hashtable<UUID, Stack<Location<World>>> storedLocations = new Hashtable<>();
     private static Currency currency = null;
 
     public static void init(File rootDir) throws IOException {
-        energynodesFile = new File(rootDir, "energynodes.json");
-        energynodesFile.createNewFile();
+        energynodesFile = new File(rootDir, "energynodes.conf");
+        if(!energynodesFile.exists())
+            energynodesFile.createNewFile();
 
-        TypeSerializerCollection serializers = TypeSerializers.getDefaultSerializers().newChild();
-        serializers.registerType(TypeToken.of(EnergyType.class), new EnergyTypeSerializer());
-        //serializers.registerType(TypeToken.of(Currency.class), new CurrencySerializer());
-        ConfigurationOptions options = ConfigurationOptions.defaults().setSerializers(serializers);
+        TypeSerializerCollection serializers = TypeSerializerCollection.defaults().newChild();
+        serializers.register(TypeToken.of(EnergyType.class), new EnergyTypeSerializer());
+        //serializers.register(TypeToken.of(EnergySink.class), new EnergySinkSerializer());
+        //serializers.register(TypeToken.of(EnergySource.class), new EnergySourceSerializer());
+        options = ConfigurationOptions.defaults().withSerializers(serializers);
 
         loader = HoconConfigurationLoader.builder().setFile(energynodesFile).build();
-        energynodesRoot = loader.load(options);
+        energyNodesList = loader.load(options);
+        load();
     }
 
     public static void load() {
-        for (ConfigurationNode energyNode : energynodesRoot.getNode("energyNodes").getChildrenList()) {
+        for (ConfigurationNode energyNode : energyNodesList.getNode("energyNodes").getChildrenList()) {
+            PowerSink.getLogger().info("loading energy node. {}", energyNode.toString());
             try {
-                pushEnergyNode((EnergyNode) energyNode.getNode("energyNode").getValue(TypeToken.of(Class.forName(energyNode.getNode("type").toString()))));
+                String energyNodeClassName = energyNode.getNode("type").getString();
+                PowerSink.getLogger().info("class: {}", energyNodeClassName);
+                if(energyNodeClassName == null) continue;
+
+                EnergyNode node = (EnergyNode) energyNode.getNode("energyNode").getValue(TypeToken.of(Class.forName(energyNodeClassName)));
+                node.fetchTileEntity();
+                energyNodes.put(node.getLocation(), node);
             } catch (Exception e) {
-                e.printStackTrace();
+                PowerSink.getLogger().error("Error loading EnergyNode", e);
             }
         }
     }
 
     public static void save() {
-        energynodesRoot.removeChild("energyNodes");
+        energyNodesList.removeChild("energyNodes");
         for (EnergyNode energyNode : energyNodes.values()) {
-            ConfigurationNode energyNodeNode = energynodesRoot.getNode("energyNodes").getAppendedNode();
+            ConfigurationNode energyNodeNode = energyNodesList.getNode("energyNodes").appendListNode();
             try {
-                if (energyNode instanceof EnergySource) {
+                PowerSink.getLogger().info("serialize {}", energyNode.getClass().getName());
+                if(energyNode instanceof EnergySource) {
                     energyNodeNode.getNode("energyNode").setValue(TypeToken.of(EnergySource.class), (EnergySource) energyNode);
-                } else if (energyNode instanceof EnergySink) {
+                } else if(energyNode instanceof EnergySink) {
                     energyNodeNode.getNode("energyNode").setValue(TypeToken.of(EnergySink.class), (EnergySink) energyNode);
                 } else {
                     continue;
                 }
-                energyNodeNode.getNode("type").setValue(energyNode.getClass().getName());
             } catch (ObjectMappingException e) {
-                e.printStackTrace();
+                PowerSink.getLogger().error("Error saving EnergyNode at {}", energyNode.getLocation().toString(), e);
             }
+            energyNodeNode.getNode("type").setValue(energyNode.getClass().getName());
         }
-    }
-
-    public static void pushEnergyNode(EnergyNode node) {
-        energyNodes.put(node.getLocation(), node);
-        Event registerEvent = null;
-        if (node instanceof EnergySource) {
-            registerEvent = new RegisterNodeEvent((EnergySource) node);
-        } else if (node instanceof EnergySink) {
-            registerEvent = new RegisterNodeEvent((EnergySink) node);
-        } else {
-            //
-            return;
+        try {
+            loader.save(energyNodesList);
+        } catch (IOException e) {
+            PowerSink.getLogger().error("Could not save energy nodes to disk", e);
         }
-        MinecraftForge.EVENT_BUS.post(registerEvent);
     }
 
     public static void addEnergyNode(EnergyNode node) {
-        pushEnergyNode(node);
+        energyNodes.put(node.getLocation(), node);
         save();
     }
 
     public static void delEnergyNode(Location<World> location) {
-
+        energyNodes.remove(location);
+        save();
     }
 
-    public static Collection<EnergyNode> getEnergyNodes() {
-        return energyNodes.values();
+    public static Map<Location<World>, EnergyNode> getEnergyNodes() {
+        return energyNodes;
+    }
+
+    public static void reload() {
+        energyNodes.clear();
+        load();
     }
 }

@@ -1,25 +1,27 @@
 package tv.voidstar.powersink;
 
 import com.google.inject.Inject;
-import net.minecraftforge.common.MinecraftForge;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.config.ConfigDir;
+import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.EventContext;
 import org.spongepowered.api.event.cause.EventContextKeys;
+import org.spongepowered.api.event.game.GameReloadEvent;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
-import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartingServerEvent;
+import org.spongepowered.api.event.game.state.GameStoppingServerEvent;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.EconomyService;
+import tv.voidstar.powersink.energy.EnergyNode;
 import tv.voidstar.powersink.energy.compat.EnergyCapability;
-import tv.voidstar.powersink.event.listener.ForgeClickEventListener;
-import tv.voidstar.powersink.event.listener.ForgeTickEventListener;
 import tv.voidstar.powersink.event.listener.SpongeBlockBreakEventListener;
+import tv.voidstar.powersink.event.listener.SpongeLeftClickListener;
 import tv.voidstar.powersink.payout.MoneyCalculator;
 import tv.voidstar.powersink.payout.MoneyCalculatorRoot;
 
@@ -37,7 +39,11 @@ public class PowerSink {
 
     private File rootDir;
 
+    @Inject
+    private PluginContainer container;
+
     private static PowerSink plugin;
+    private static Cause cause;
 
     @Inject
     private Logger logger;
@@ -49,11 +55,17 @@ public class PowerSink {
     private File defaultConfigDir;
     private MoneyCalculator moneyCalculator;
 
+
     @Listener
     public void onInit(GameInitializationEvent event) throws IOException {
         plugin = this;
 
         rootDir = new File(defaultConfigDir, "powersink");
+        if(!rootDir.exists()) {
+            if(!rootDir.mkdirs()) {
+                PowerSink.getLogger().error("Unable to create root config dir");
+            }
+        }
 
         moneyCalculator = new MoneyCalculatorRoot(100, 10, 10); // TODO: change this
         PowerSinkConfig.init(rootDir); // TODO: do configs
@@ -68,32 +80,60 @@ public class PowerSink {
 
     @Listener
     public void onStart(GameStartedServerEvent event) {
+        getLogger().info("PowerSink starting");
         EnergyCapability.init();
         Optional<EconomyService> economyServiceOpt = Sponge.getServiceManager().provide(EconomyService.class);
         if(economyServiceOpt.isPresent()) {
             economyService = economyServiceOpt.get();
             currency = economyService.getDefaultCurrency();
+            for(Currency c : economyService.getCurrencies()) {
+                if (c.getName().equals(PowerSinkConfig.getNode("").getString())) {
+                    currency = c;
+                    break;
+                }
+            }
         } else {
             getLogger().error("No economy service installed. This plugin can not function without one.");
             return;
         }
-        MinecraftForge.EVENT_BUS.register(new ForgeTickEventListener());
-        MinecraftForge.EVENT_BUS.register(new ForgeClickEventListener());
+
         Sponge.getEventManager().registerListeners(this, new SpongeBlockBreakEventListener());
+        Sponge.getEventManager().registerListeners(this, new SpongeLeftClickListener());
+        // every 20 ticks, handle energy ticks for each energynode
+        Sponge.getScheduler().createTaskBuilder()
+                .execute(() -> {
+                    for (EnergyNode node : PowerSinkData.getEnergyNodes().values()) {
+                        node.handleEnergyTick();
+                    }
+                })
+                .intervalTicks(20)
+                .submit(this.container);
     }
 
-    public static PowerSink getInstance()
-    {
+    @Listener
+    public void onStop(GameStoppingServerEvent event) {
+        getLogger().info("PowerSink stopping");
+        PowerSinkData.save();
+        PowerSinkConfig.save();
+    }
+
+    @Listener
+    public void onReload(GameReloadEvent event) {
+        getLogger().info("PowerSink reload");
+        PowerSinkData.reload();
+        PowerSinkConfig.load();
+        // MoneyCalculator reload
+    }
+
+    public static PowerSink getInstance() {
         return plugin;
     }
 
-    public static Logger getLogger()
-    {
+    public static Logger getLogger() {
         return getInstance().logger;
     }
 
-    public static EconomyService getEcoService()
-    {
+    public static EconomyService getEcoService() {
         return getInstance().economyService;
     }
 
@@ -102,11 +142,18 @@ public class PowerSink {
     }
 
     public static Cause getCause() {
-        return Cause.builder()
-                .build(EventContext.builder()
-                        .add(EventContextKeys.PLUGIN, Sponge.getPluginManager().fromInstance(PowerSink.getInstance()).get()
-                        ).build()
-                );
+        if (getInstance().cause == null) {
+            Optional<PluginContainer> pluginContainerOpt = Sponge.getPluginManager().fromInstance(PowerSink.getInstance());
+            if(!pluginContainerOpt.isPresent()) {
+                getLogger().error("can't get Plugin container from plugin instance. wtf?");
+                return null;
+            }
+
+            EventContext context = EventContext.builder().add(EventContextKeys.PLUGIN, getInstance().container).build();
+
+            getInstance().cause = Cause.builder().append(pluginContainerOpt.get()).build(context);
+        }
+        return cause;
     }
 
     public static MoneyCalculator getMoneyCalculator() {

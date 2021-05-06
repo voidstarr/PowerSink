@@ -11,7 +11,6 @@ import tv.voidstar.powersink.energy.EnergyNode;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 // rftools powercell, integrated dynamics batteries are compliant with IEnergyStorage forge
 public class EnergyCapability {

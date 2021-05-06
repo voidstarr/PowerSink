@@ -5,7 +5,6 @@ import net.minecraftforge.fml.common.eventhandler.Event;
 import tv.voidstar.powersink.Util;
 import tv.voidstar.powersink.energy.EnergyNode;
 import tv.voidstar.powersink.energy.compat.EnergyType;
-import tv.voidstar.powersink.energy.EnergySink;
 import tv.voidstar.powersink.energy.EnergySource;
 
 import java.util.Optional;
@@ -31,8 +30,7 @@ public class RegisterNodeEvent extends Event {
         this.energyType = node.getEnergyType();
         this.nodeType = (node instanceof EnergySource) ? NodeType.SOURCE : NodeType.SINK;
         this.playerOwner = node.getPlayerOwner();
-        Util.dimensionIDFromSpongeLocation(node.getLocation())
-                .ifPresent(dim -> this.dimension = dim);
+        Util.dimensionIDFromSpongeLocation(node.getLocation()).ifPresent(dim -> this.dimension = dim);
     }
 
     public final BlockPos getBlockPos() {

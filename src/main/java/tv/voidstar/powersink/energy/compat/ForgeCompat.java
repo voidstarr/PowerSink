@@ -7,8 +7,8 @@ import org.spongepowered.api.service.economy.account.Account;
 import org.spongepowered.api.service.economy.transaction.ResultType;
 import org.spongepowered.api.service.economy.transaction.TransactionResult;
 import org.spongepowered.api.text.Text;
-import tv.voidstar.powersink.Constants;
 import tv.voidstar.powersink.PowerSink;
+import tv.voidstar.powersink.PowerSinkConfig;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -16,7 +16,7 @@ import java.util.UUID;
 public class ForgeCompat {
     public static void removeEnergyAndPay(TileEntity tileEntity, UUID playerOwner) {
         IEnergyStorage energyStorage = (IEnergyStorage) tileEntity;
-        int energyToExtract = energyStorage.extractEnergy(Constants.ENERGY_TO_TRANSACT, true);
+        int energyToExtract = energyStorage.extractEnergy(PowerSinkConfig.getNode("rates", "max_energy_transaction").getInt(), true);
         BigDecimal moneyToDeposit = PowerSink.getMoneyCalculator().covertEnergyToMoney(energyToExtract);
 
         Account acc = PowerSink.getEcoService().getOrCreateAccount(playerOwner).get();
@@ -34,7 +34,7 @@ public class ForgeCompat {
 
     public static void withdrawPaymentAndAddEnergy(TileEntity tileEntity, UUID playerOwner) {
         IEnergyStorage energyStorage = (IEnergyStorage) tileEntity;
-        int energyToGive = energyStorage.receiveEnergy(Constants.ENERGY_TO_TRANSACT, true);
+        int energyToGive = energyStorage.receiveEnergy(PowerSinkConfig.getNode("rates", "max_energy_transaction").getInt(), true);
         BigDecimal moneyToWithdraw = PowerSink.getMoneyCalculator().covertEnergyToMoney(energyToGive);
 
         Account acc = PowerSink.getEcoService().getOrCreateAccount(playerOwner).get();
