@@ -9,6 +9,7 @@ import org.spongepowered.api.service.economy.transaction.TransactionResult;
 import org.spongepowered.api.text.Text;
 import tv.voidstar.powersink.PowerSink;
 import tv.voidstar.powersink.PowerSinkConfig;
+import tv.voidstar.powersink.payout.MoneyCalculator;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -16,8 +17,8 @@ import java.util.UUID;
 public class ForgeCompat {
     public static void removeEnergyAndPay(TileEntity tileEntity, UUID playerOwner) {
         IEnergyStorage energyStorage = (IEnergyStorage) tileEntity;
-        int energyToExtract = energyStorage.extractEnergy(PowerSinkConfig.getNode("rates", "max_energy_transaction").getInt(), true);
-        BigDecimal moneyToDeposit = PowerSink.getMoneyCalculator().covertEnergyToMoney(energyToExtract);
+        int energyToExtract = energyStorage.extractEnergy(PowerSinkConfig.getNode("rates", "maxEnergyTransaction").getInt(), true);
+        BigDecimal moneyToDeposit = MoneyCalculator.getMoneyCalculator().covertEnergyToMoney(energyToExtract);
 
         Account acc = PowerSink.getEcoService().getOrCreateAccount(playerOwner).get();
         TransactionResult result = acc.deposit(PowerSink.getCurrency(), moneyToDeposit, PowerSink.getCause());
@@ -34,8 +35,8 @@ public class ForgeCompat {
 
     public static void withdrawPaymentAndAddEnergy(TileEntity tileEntity, UUID playerOwner) {
         IEnergyStorage energyStorage = (IEnergyStorage) tileEntity;
-        int energyToGive = energyStorage.receiveEnergy(PowerSinkConfig.getNode("rates", "max_energy_transaction").getInt(), true);
-        BigDecimal moneyToWithdraw = PowerSink.getMoneyCalculator().covertEnergyToMoney(energyToGive);
+        int energyToGive = energyStorage.receiveEnergy(PowerSinkConfig.getNode("rates", "maxEnergyTransaction").getInt(), true);
+        BigDecimal moneyToWithdraw = MoneyCalculator.getMoneyCalculator().covertEnergyToMoney(energyToGive);
 
         Account acc = PowerSink.getEcoService().getOrCreateAccount(playerOwner).get();
         TransactionResult result = acc.withdraw(PowerSink.getCurrency(), moneyToWithdraw, PowerSink.getCause());

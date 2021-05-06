@@ -34,9 +34,9 @@ public class SpongeLeftClickListener {
         PowerSink.getLogger().info("Player is holding {}", heldItemString);
 
         NodeType nodeType = null;
-        if(heldItemString.equals(PowerSinkConfig.getNode("activation_items", "sink").getString())) {
+        if(heldItemString.equals(PowerSinkConfig.getNode("activationItems", "sink").getString())) {
             nodeType = NodeType.SINK;
-        } else if(heldItemString.equals(PowerSinkConfig.getNode("activation_items", "source").getString())) {
+        } else if(heldItemString.equals(PowerSinkConfig.getNode("activationItems", "source").getString())) {
             nodeType = NodeType.SOURCE;
         } else {
             return;

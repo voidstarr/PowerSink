@@ -44,6 +44,7 @@ public class EnergyCapability {
                     energyNode.getPlayerOwner()
                     );
             // TODO: get tile entity or remove offending node
+            return;
         }
         TileEntity tileEntity = tileEntityOpt.get();
         switch (energyNode.getEnergyType()) {

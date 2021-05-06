@@ -39,7 +39,6 @@ public class PowerSink {
 
     private File rootDir;
 
-    @Inject
     private PluginContainer container;
 
     private static PowerSink plugin;
@@ -67,7 +66,6 @@ public class PowerSink {
             }
         }
 
-        moneyCalculator = new MoneyCalculatorRoot(100, 10, 10); // TODO: change this
         PowerSinkConfig.init(rootDir); // TODO: do configs
         PowerSinkData.init(rootDir);
 
@@ -81,6 +79,8 @@ public class PowerSink {
     @Listener
     public void onStart(GameStartedServerEvent event) {
         getLogger().info("PowerSink starting");
+        Sponge.getPluginManager().fromInstance(PowerSink.getInstance())
+                .ifPresent(pluginContainer -> container = pluginContainer);
         EnergyCapability.init();
         Optional<EconomyService> economyServiceOpt = Sponge.getServiceManager().provide(EconomyService.class);
         if(economyServiceOpt.isPresent()) {
@@ -106,7 +106,7 @@ public class PowerSink {
                         node.handleEnergyTick();
                     }
                 })
-                .intervalTicks(20)
+                .intervalTicks(PowerSinkConfig.getNode("powersink", "tickInterval").getInt())
                 .submit(this.container);
     }
 
@@ -142,7 +142,7 @@ public class PowerSink {
     }
 
     public static Cause getCause() {
-        if (getInstance().cause == null) {
+        if (cause == null) {
             Optional<PluginContainer> pluginContainerOpt = Sponge.getPluginManager().fromInstance(PowerSink.getInstance());
             if(!pluginContainerOpt.isPresent()) {
                 getLogger().error("can't get Plugin container from plugin instance. wtf?");
@@ -151,12 +151,8 @@ public class PowerSink {
 
             EventContext context = EventContext.builder().add(EventContextKeys.PLUGIN, getInstance().container).build();
 
-            getInstance().cause = Cause.builder().append(pluginContainerOpt.get()).build(context);
+            cause = Cause.builder().append(pluginContainerOpt.get()).build(context);
         }
         return cause;
-    }
-
-    public static MoneyCalculator getMoneyCalculator() {
-        return getInstance().moneyCalculator;
     }
 }

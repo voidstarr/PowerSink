@@ -1,16 +1,12 @@
 package tv.voidstar.powersink.energy;
 
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.common.DimensionManager;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
-import tv.voidstar.powersink.Util;
 import tv.voidstar.powersink.energy.compat.EnergyCapability;
 import tv.voidstar.powersink.energy.compat.EnergyType;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @ConfigSerializable
@@ -23,7 +19,7 @@ public class EnergySource extends EnergyNode {
         super(location, playerOwner, energyType);
     }
 
-    public EnergySource(){
+    public EnergySource() {
 
     }
 

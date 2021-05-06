@@ -63,8 +63,11 @@ public abstract class EnergyNode {
         Optional<Integer> dimID = Util.dimensionIDFromSpongeLocation(location);
         if (dimID.isPresent()) {
             this.tileEntity = DimensionManager.getWorld(dimID.get()).getTileEntity(Util.forgeBlockPosFromSpongeLocation(location));
+            if (this.tileEntity == null) {
+                // TODO:
+            }
         } else {
-            PowerSink.getLogger().error("Unable to get Forge TileEntity for EnergyNode at {}", location.toString());
+            PowerSink.getLogger().error("Unable to get Forge TileEntity for EnergyNode at {}. Dimension not loaded.", location.toString());
             // TODO: throw something?
         }
     }

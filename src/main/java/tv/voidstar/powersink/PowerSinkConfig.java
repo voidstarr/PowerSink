@@ -3,6 +3,7 @@ package tv.voidstar.powersink;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import tv.voidstar.powersink.payout.MoneyCalculator;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,12 +17,12 @@ public class PowerSinkConfig {
         configFile = new File(rootDir, "powersink.conf");
         loader = HoconConfigurationLoader.builder().setFile(configFile).build();
         load();
+        MoneyCalculator.init();
     }
 
     public static void load() {
         try {
             if(!configFile.exists()) {
-                configFile.getParentFile().mkdirs();
                 configFile.createNewFile();
             }
             configs = loader.load();
@@ -32,17 +33,18 @@ public class PowerSinkConfig {
         // defaults
         configs.getNode("powersink").setComment("General PowerSink configurations.");
         getValOrSetDefault(configs.getNode("powersink", "currency"), "dollar");
+        getValOrSetDefault(configs.getNode("powersink", "tickInterval"), 2);
 
-        configs.getNode("activation_items").setComment("What item a player should hold to register a sink or source.");
-        getValOrSetDefault(configs.getNode("activation_items", "source"),"minecraft:redstone");
-        getValOrSetDefault(configs.getNode("activation_items", "sink"), "minecraft:glowstone_dust");
+        configs.getNode("activationItems").setComment("What item a player should hold to register a sink or source.");
+        getValOrSetDefault(configs.getNode("activationItems", "source"),"minecraft:redstone");
+        getValOrSetDefault(configs.getNode("activationItems", "sink"), "minecraft:glowstone_dust");
 
         configs.getNode("rates").setComment("How money given/withdrawn should be calculated.");
-        getValOrSetDefault(configs.getNode("rates", "max_energy_transaction"),10000);
+        getValOrSetDefault(configs.getNode("rates", "maxEnergyTransaction"),10000);
         getValOrSetDefault(configs.getNode("rates", "function"), "log");
-        getValOrSetDefault(configs.getNode("rates", "base"),1.0);
-        getValOrSetDefault(configs.getNode("rates", "multiplier"),1.0);
-        getValOrSetDefault(configs.getNode("rates", "shift"),0.0);
+        getValOrSetDefault(configs.getNode("rates", "base"),100.0);
+        getValOrSetDefault(configs.getNode("rates", "multiplier"),10.0);
+        getValOrSetDefault(configs.getNode("rates", "shift"),10.0);
 
         save();
     }
