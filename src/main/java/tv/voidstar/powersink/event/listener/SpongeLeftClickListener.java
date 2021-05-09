@@ -13,7 +13,10 @@ import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
-import tv.voidstar.powersink.*;
+import tv.voidstar.powersink.PowerSink;
+import tv.voidstar.powersink.PowerSinkConfig;
+import tv.voidstar.powersink.PowerSinkData;
+import tv.voidstar.powersink.Util;
 import tv.voidstar.powersink.energy.EnergyNode;
 import tv.voidstar.powersink.energy.EnergySink;
 import tv.voidstar.powersink.energy.EnergySource;
@@ -33,7 +36,7 @@ public class SpongeLeftClickListener {
 
         PowerSink.getLogger().info("Player is holding {}", heldItemString);
 
-        NodeType nodeType = null;
+        NodeType nodeType;
         if(heldItemString.equals(PowerSinkConfig.getNode("activationItems", "sink").getString())) {
             nodeType = NodeType.SINK;
         } else if(heldItemString.equals(PowerSinkConfig.getNode("activationItems", "source").getString())) {
@@ -53,26 +56,34 @@ public class SpongeLeftClickListener {
         BlockPos blockPos = Util.forgeBlockPosFromSpongeLocation(location);
 
         TileEntity tileEntity = DimensionManager.getWorld(dimensionIdOpt.get()).getTileEntity(blockPos);
+
+        if(tileEntity == null) {
+            PowerSink.getLogger().info("TE==null");
+            return;
+        }
+
         EnergyType energyType = EnergyCapability.getEnergyStorageType(tileEntity);
 
         PowerSink.getLogger().info("Player left clicked: {}", tileEntity.getDisplayName());
+
+        if (energyType == EnergyType.NONE){
+            Text message = Text.builder("[PowerSink] That block is not supported.").build();
+            player.sendMessage(message);
+            return;
+        }
+
         PowerSink.getLogger().info("\tblock at {} has Energy capability.", tileEntity.getPos().toString());
+        PowerSink.getLogger().info("\tEnergy type: {}", energyType.toString());
         if(energyType == EnergyType.FORGE) {
-            IEnergyStorage energyStorage = (IEnergyStorage) tileEntity;
+            IEnergyStorage energyStorage = (IEnergyStorage) EnergyCapability.getCapabilityInterface(tileEntity, energyType).get();
             PowerSink.getLogger().info("\tEnergy stored: {}", energyStorage.getEnergyStored());
             PowerSink.getLogger().info("\tMax energy stored: {}", energyStorage.getMaxEnergyStored());
             PowerSink.getLogger().info("\tcan extract: {}", energyStorage.canExtract());
             PowerSink.getLogger().info("\tcan receive: {}", energyStorage.canReceive());
         } else if (energyType == EnergyType.MEKANISM) {
-            IStrictEnergyStorage energyStorage = (IStrictEnergyStorage) tileEntity;
+            IStrictEnergyStorage energyStorage = (IStrictEnergyStorage) EnergyCapability.getCapabilityInterface(tileEntity, energyType).get();
             PowerSink.getLogger().info("\tEnergy stored: {}", energyStorage.getEnergy());
             PowerSink.getLogger().info("\tMax energy stored: {}", energyStorage.getMaxEnergy());
-        } else {
-            PowerSink.getLogger().info("\tblock isn't supported");
-        }
-
-        if(energyType == EnergyType.NONE) {
-            return;
         }
 
         EnergyNode energyNode = null;
@@ -85,15 +96,11 @@ public class SpongeLeftClickListener {
                 break;
         }
 
-        if(energyNode != null) {
-            if(!PowerSinkData.getEnergyNodes().containsKey(location)) {
-                PowerSinkData.addEnergyNode(energyNode);
-            } else {
-                Text message = Text.builder("[PowerSink] That block is already registered.").build();
-                player.sendMessage(message);
-            }
+        if(!PowerSinkData.getEnergyNodes().containsKey(location)) {
+            PowerSinkData.addEnergyNode(energyNode);
         } else {
-            PowerSink.getLogger().error("EnergyNode at {} unable to be determined as SINK or SOURCE", location.toString());
+            Text message = Text.builder("[PowerSink] That block is already registered.").build();
+            player.sendMessage(message);
         }
     }
 }

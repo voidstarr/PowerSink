@@ -1,10 +1,8 @@
 package tv.voidstar.powersink;
 
-import com.flowpowered.math.vector.Vector3i;
 import net.minecraft.util.math.BlockPos;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataQuery;
-import org.spongepowered.api.world.Dimension;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 

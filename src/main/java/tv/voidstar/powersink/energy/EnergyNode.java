@@ -1,9 +1,7 @@
 package tv.voidstar.powersink.energy;
 
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.common.MinecraftForge;
 import ninja.leaping.configurate.objectmapping.Setting;
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable;
 import org.spongepowered.api.world.Location;
@@ -64,7 +62,7 @@ public abstract class EnergyNode {
         if (dimID.isPresent()) {
             this.tileEntity = DimensionManager.getWorld(dimID.get()).getTileEntity(Util.forgeBlockPosFromSpongeLocation(location));
             if (this.tileEntity == null) {
-                // TODO:
+                PowerSink.getLogger().error("Unable to get Forge TileEntity for EnergyNode at {}. Dimension is supposedly loaded.", location.toString());
             }
         } else {
             PowerSink.getLogger().error("Unable to get Forge TileEntity for EnergyNode at {}. Dimension not loaded.", location.toString());

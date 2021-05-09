@@ -12,11 +12,18 @@ import tv.voidstar.powersink.PowerSinkConfig;
 import tv.voidstar.powersink.payout.MoneyCalculator;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 public class ForgeCompat {
     public static void removeEnergyAndPay(TileEntity tileEntity, UUID playerOwner) {
-        IEnergyStorage energyStorage = (IEnergyStorage) tileEntity;
+        Optional<Object> energyStorageOpt = EnergyCapability.getCapabilityInterface(tileEntity, EnergyType.MEKANISM);
+        if(!energyStorageOpt.isPresent()) {
+            PowerSink.getLogger().error("Unable to get Energy Storage Interface for block at {}", tileEntity.getPos().toString());
+            return;
+        }
+
+        IEnergyStorage energyStorage = (IEnergyStorage) energyStorageOpt.get();
         int energyToExtract = energyStorage.extractEnergy(PowerSinkConfig.getNode("rates", "maxEnergyTransaction").getInt(), true);
         BigDecimal moneyToDeposit = MoneyCalculator.getMoneyCalculator().covertEnergyToMoney(energyToExtract);
 
@@ -34,7 +41,13 @@ public class ForgeCompat {
     }
 
     public static void withdrawPaymentAndAddEnergy(TileEntity tileEntity, UUID playerOwner) {
-        IEnergyStorage energyStorage = (IEnergyStorage) tileEntity;
+        Optional<Object> energyStorageOpt = EnergyCapability.getCapabilityInterface(tileEntity, EnergyType.MEKANISM);
+        if(!energyStorageOpt.isPresent()) {
+            PowerSink.getLogger().error("Unable to get Energy Storage Interface for block at {}", tileEntity.getPos().toString());
+            return;
+        }
+
+        IEnergyStorage energyStorage = (IEnergyStorage) energyStorageOpt.get();
         int energyToGive = energyStorage.receiveEnergy(PowerSinkConfig.getNode("rates", "maxEnergyTransaction").getInt(), true);
         BigDecimal moneyToWithdraw = MoneyCalculator.getMoneyCalculator().covertEnergyToMoney(energyToGive);
 

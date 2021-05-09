@@ -23,7 +23,6 @@ import tv.voidstar.powersink.energy.compat.EnergyCapability;
 import tv.voidstar.powersink.event.listener.SpongeBlockBreakEventListener;
 import tv.voidstar.powersink.event.listener.SpongeLeftClickListener;
 import tv.voidstar.powersink.payout.MoneyCalculator;
-import tv.voidstar.powersink.payout.MoneyCalculatorRoot;
 
 import java.io.File;
 import java.io.IOException;
@@ -99,7 +98,7 @@ public class PowerSink {
 
         Sponge.getEventManager().registerListeners(this, new SpongeBlockBreakEventListener());
         Sponge.getEventManager().registerListeners(this, new SpongeLeftClickListener());
-        // every 20 ticks, handle energy ticks for each energynode
+        // every x ticks, handle energy ticks for each energynode
         Sponge.getScheduler().createTaskBuilder()
                 .execute(() -> {
                     for (EnergyNode node : PowerSinkData.getEnergyNodes().values()) {
@@ -122,7 +121,7 @@ public class PowerSink {
         getLogger().info("PowerSink reload");
         PowerSinkData.reload();
         PowerSinkConfig.load();
-        // MoneyCalculator reload
+        MoneyCalculator.init();
     }
 
     public static PowerSink getInstance() {
