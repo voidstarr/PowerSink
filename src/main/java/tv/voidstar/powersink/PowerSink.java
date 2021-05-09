@@ -53,7 +53,6 @@ public class PowerSink {
     private File defaultConfigDir;
     private MoneyCalculator moneyCalculator;
 
-
     @Listener
     public void onInit(GameInitializationEvent event) throws IOException {
         plugin = this;
@@ -67,11 +66,6 @@ public class PowerSink {
 
         PowerSinkConfig.init(rootDir); // TODO: do configs
         PowerSinkData.init(rootDir);
-
-    }
-
-    @Listener
-    public void onEnable(GameStartingServerEvent event) {
 
     }
 
@@ -95,6 +89,8 @@ public class PowerSink {
             getLogger().error("No economy service installed. This plugin can not function without one.");
             return;
         }
+
+        PowerSinkData.load();
 
         Sponge.getEventManager().registerListeners(this, new SpongeBlockBreakEventListener());
         Sponge.getEventManager().registerListeners(this, new SpongeLeftClickListener());

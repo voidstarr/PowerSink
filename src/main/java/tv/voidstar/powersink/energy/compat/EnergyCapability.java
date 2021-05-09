@@ -37,15 +37,13 @@ public class EnergyCapability {
         for(EnumFacing facing : EnumFacing.VALUES) {
             for (Map.Entry<EnergyType, Capability<?>> entry : energyCapabilities.entrySet()) {
                 if (tileEntity.hasCapability(entry.getValue(), facing)) {
-                    //PowerSink.getLogger().info("TE at {} has {} [{}] on {} side", tileEntity.getPos().toString(), entry.getValue().toString(), entry.getKey().toString(), facing.toString());
-                    return Optional.ofNullable((Object) tileEntity.getCapability(entry.getValue(), facing));
+                    return Optional.ofNullable(tileEntity.getCapability(entry.getValue(), facing));
                 }
             }
         }
         for (Map.Entry<EnergyType, Capability<?>> entry : energyCapabilities.entrySet()) {
             if (tileEntity.hasCapability(entry.getValue(), null)) {
-                //PowerSink.getLogger().info("TE at {} has {} [{}]", tileEntity.getPos().toString(), entry.getValue().toString(), entry.getKey().toString());
-                return Optional.ofNullable((Object) tileEntity.getCapability(entry.getValue(), null));
+                return Optional.ofNullable(tileEntity.getCapability(entry.getValue(), null));
             }
         }
         return Optional.empty();

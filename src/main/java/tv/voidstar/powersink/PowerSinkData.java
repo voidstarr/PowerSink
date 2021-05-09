@@ -43,20 +43,25 @@ public class PowerSinkData {
 
         loader = HoconConfigurationLoader.builder().setFile(energynodesFile).build();
         energyNodesList = loader.load(options);
-        load();
     }
 
     public static void load() {
         for (ConfigurationNode energyNode : energyNodesList.getNode("energyNodes").getChildrenList()) {
-            PowerSink.getLogger().info("loading energy node. {}", energyNode.toString());
+            PowerSink.getLogger().debug("loading energy node. {}", energyNode.toString());
             try {
                 String energyNodeClassName = energyNode.getNode("type").getString();
-                PowerSink.getLogger().info("class: {}", energyNodeClassName);
+                Class energyNodeClass = Class.forName(energyNodeClassName);
+                PowerSink.getLogger().debug("class: {}", energyNodeClass);
                 if(energyNodeClassName == null) continue;
-
-                EnergyNode node = (EnergyNode) energyNode.getNode("energyNode").getValue(TypeToken.of(Class.forName(energyNodeClassName)));
-                node.fetchTileEntity();
-                energyNodes.put(node.getLocation(), node);
+                if(energyNodeClassName.contains("EnergySource")) {
+                    EnergySource node = (EnergySource) energyNode.getNode("energyNode").getValue(TypeToken.of(Class.forName(energyNodeClassName)));
+                    node.fetchTileEntity();
+                    energyNodes.put(node.getLocation(), node);
+                } else if(energyNodeClassName.contains("EnergySink")) {
+                    EnergySink node = (EnergySink) energyNode.getNode("energyNode").getValue(TypeToken.of(Class.forName(energyNodeClassName)));
+                    node.fetchTileEntity();
+                    energyNodes.put(node.getLocation(), node);
+                }
             } catch (Exception e) {
                 PowerSink.getLogger().error("Error loading EnergyNode", e);
             }
@@ -68,7 +73,7 @@ public class PowerSinkData {
         for (EnergyNode energyNode : energyNodes.values()) {
             ConfigurationNode energyNodeNode = energyNodesList.getNode("energyNodes").appendListNode();
             try {
-                PowerSink.getLogger().info("serialize {}", energyNode.getClass().getName());
+                PowerSink.getLogger().debug("serialize {}", energyNode.getClass().getName());
                 if(energyNode instanceof EnergySource) {
                     energyNodeNode.getNode("energyNode").setValue(TypeToken.of(EnergySource.class), (EnergySource) energyNode);
                 } else if(energyNode instanceof EnergySink) {

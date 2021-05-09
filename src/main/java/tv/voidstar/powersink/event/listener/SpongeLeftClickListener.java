@@ -29,12 +29,12 @@ import java.util.Optional;
 public class SpongeLeftClickListener {
     @Listener
     public void onPlayerInteractBlock(InteractBlockEvent.Primary event, @First Player player) {
-        PowerSink.getLogger().info("InteractBlockEvent.Primary.MainHand");
+        PowerSink.getLogger().debug("InteractBlockEvent.Primary.MainHand");
         Optional<ItemStack> heldItemOpt = player.getItemInHand(event.getHandType());
         if(!heldItemOpt.isPresent()) return;
         String heldItemString = heldItemOpt.get().getType().getName();
 
-        PowerSink.getLogger().info("Player is holding {}", heldItemString);
+        PowerSink.getLogger().debug("Player is holding {}", heldItemString);
 
         NodeType nodeType;
         if(heldItemString.equals(PowerSinkConfig.getNode("activationItems", "sink").getString())) {
@@ -49,7 +49,7 @@ public class SpongeLeftClickListener {
         if(!locationOpt.isPresent()) return;
         Location<World> location = locationOpt.get();
 
-        PowerSink.getLogger().info("Sponge block at : {}", location.toString());
+        PowerSink.getLogger().debug("Sponge block at : {}", location.toString());
 
         Optional<Integer> dimensionIdOpt = Util.dimensionIDFromSpongeLocation(location);
         if(!dimensionIdOpt.isPresent()) return;
@@ -58,13 +58,13 @@ public class SpongeLeftClickListener {
         TileEntity tileEntity = DimensionManager.getWorld(dimensionIdOpt.get()).getTileEntity(blockPos);
 
         if(tileEntity == null) {
-            PowerSink.getLogger().info("TE==null");
+            PowerSink.getLogger().debug("TE==null");
             return;
         }
 
         EnergyType energyType = EnergyCapability.getEnergyStorageType(tileEntity);
 
-        PowerSink.getLogger().info("Player left clicked: {}", tileEntity.getDisplayName());
+        PowerSink.getLogger().debug("Player left clicked: {}", tileEntity.getDisplayName());
 
         if (energyType == EnergyType.NONE){
             Text message = Text.builder("[PowerSink] That block is not supported.").build();
@@ -72,18 +72,27 @@ public class SpongeLeftClickListener {
             return;
         }
 
-        PowerSink.getLogger().info("\tblock at {} has Energy capability.", tileEntity.getPos().toString());
-        PowerSink.getLogger().info("\tEnergy type: {}", energyType.toString());
+        PowerSink.getLogger().debug("\tblock at {} has Energy capability.", tileEntity.getPos().toString());
+        PowerSink.getLogger().debug("\tEnergy type: {}", energyType.toString());
         if(energyType == EnergyType.FORGE) {
             IEnergyStorage energyStorage = (IEnergyStorage) EnergyCapability.getCapabilityInterface(tileEntity, energyType).get();
-            PowerSink.getLogger().info("\tEnergy stored: {}", energyStorage.getEnergyStored());
-            PowerSink.getLogger().info("\tMax energy stored: {}", energyStorage.getMaxEnergyStored());
-            PowerSink.getLogger().info("\tcan extract: {}", energyStorage.canExtract());
-            PowerSink.getLogger().info("\tcan receive: {}", energyStorage.canReceive());
+            if(nodeType == NodeType.SINK && !energyStorage.canReceive()) {
+                Text message = Text.builder("[PowerSink] That block can not receive energy.").build();
+                player.sendMessage(message);
+                return;
+            } else if(nodeType == NodeType.SOURCE && !energyStorage.canExtract()) {
+                Text message = Text.builder("[PowerSink] That block can not send energy.").build();
+                player.sendMessage(message);
+                return;
+            }
+            PowerSink.getLogger().debug("\tEnergy stored: {}", energyStorage.getEnergyStored());
+            PowerSink.getLogger().debug("\tMax energy stored: {}", energyStorage.getMaxEnergyStored());
+            PowerSink.getLogger().debug("\tcan extract: {}", energyStorage.canExtract());
+            PowerSink.getLogger().debug("\tcan receive: {}", energyStorage.canReceive());
         } else if (energyType == EnergyType.MEKANISM) {
             IStrictEnergyStorage energyStorage = (IStrictEnergyStorage) EnergyCapability.getCapabilityInterface(tileEntity, energyType).get();
-            PowerSink.getLogger().info("\tEnergy stored: {}", energyStorage.getEnergy());
-            PowerSink.getLogger().info("\tMax energy stored: {}", energyStorage.getMaxEnergy());
+            PowerSink.getLogger().debug("\tEnergy stored: {}", energyStorage.getEnergy());
+            PowerSink.getLogger().debug("\tMax energy stored: {}", energyStorage.getMaxEnergy());
         }
 
         EnergyNode energyNode = null;
