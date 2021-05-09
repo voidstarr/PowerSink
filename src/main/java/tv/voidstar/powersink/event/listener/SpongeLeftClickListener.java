@@ -10,13 +10,9 @@ import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
-import tv.voidstar.powersink.PowerSink;
-import tv.voidstar.powersink.PowerSinkConfig;
-import tv.voidstar.powersink.PowerSinkData;
-import tv.voidstar.powersink.Util;
+import tv.voidstar.powersink.*;
 import tv.voidstar.powersink.energy.EnergyNode;
 import tv.voidstar.powersink.energy.EnergySink;
 import tv.voidstar.powersink.energy.EnergySource;
@@ -29,18 +25,29 @@ import java.util.Optional;
 public class SpongeLeftClickListener {
     @Listener
     public void onPlayerInteractBlock(InteractBlockEvent.Primary event, @First Player player) {
-        PowerSink.getLogger().debug("InteractBlockEvent.Primary.MainHand");
         Optional<ItemStack> heldItemOpt = player.getItemInHand(event.getHandType());
         if(!heldItemOpt.isPresent()) return;
         String heldItemString = heldItemOpt.get().getType().getName();
 
-        PowerSink.getLogger().debug("Player is holding {}", heldItemString);
-
-        NodeType nodeType;
+        boolean removeNode = false;
+        NodeType nodeType = null;
         if(heldItemString.equals(PowerSinkConfig.getNode("activationItems", "sink").getString())) {
+            if(!player.hasPermission(Constants.SETUP_SINK_PERMISSION)) {
+                PowerSink.sendMessage("You don't have permission to register a sink.", player);
+                return;
+            }
             nodeType = NodeType.SINK;
         } else if(heldItemString.equals(PowerSinkConfig.getNode("activationItems", "source").getString())) {
+            if(!player.hasPermission(Constants.SETUP_SOURCE_PERMISSION)) {
+                PowerSink.sendMessage("You don't have permission to register a source.", player);
+                return;
+            }
             nodeType = NodeType.SOURCE;
+        } else if (heldItemString.equals(PowerSinkConfig.getNode("activationItems", "remove").getString())) {
+            if(!player.hasPermission(Constants.REMOVE_NODES_PERMISSION)) {
+                return;
+            }
+            removeNode = true;
         } else {
             return;
         }
@@ -49,7 +56,14 @@ public class SpongeLeftClickListener {
         if(!locationOpt.isPresent()) return;
         Location<World> location = locationOpt.get();
 
-        PowerSink.getLogger().debug("Sponge block at : {}", location.toString());
+        if(removeNode) {
+            if(PowerSinkData.hasEnergyNode(location)) {
+                PowerSinkData.delEnergyNode(location);
+            } else {
+                PowerSink.sendMessage("That block is not registered.", player);
+            }
+            return;
+        }
 
         Optional<Integer> dimensionIdOpt = Util.dimensionIDFromSpongeLocation(location);
         if(!dimensionIdOpt.isPresent()) return;
@@ -58,42 +72,35 @@ public class SpongeLeftClickListener {
         TileEntity tileEntity = DimensionManager.getWorld(dimensionIdOpt.get()).getTileEntity(blockPos);
 
         if(tileEntity == null) {
-            PowerSink.getLogger().debug("TE==null");
             return;
         }
 
         EnergyType energyType = EnergyCapability.getEnergyStorageType(tileEntity);
 
-        PowerSink.getLogger().debug("Player left clicked: {}", tileEntity.getDisplayName());
-
         if (energyType == EnergyType.NONE){
-            Text message = Text.builder("[PowerSink] That block is not supported.").build();
-            player.sendMessage(message);
+            PowerSink.sendMessage("That block is not supported.", player);
             return;
         }
 
-        PowerSink.getLogger().debug("\tblock at {} has Energy capability.", tileEntity.getPos().toString());
-        PowerSink.getLogger().debug("\tEnergy type: {}", energyType.toString());
         if(energyType == EnergyType.FORGE) {
             IEnergyStorage energyStorage = (IEnergyStorage) EnergyCapability.getCapabilityInterface(tileEntity, energyType).get();
-            if(nodeType == NodeType.SINK && !energyStorage.canReceive()) {
-                Text message = Text.builder("[PowerSink] That block can not receive energy.").build();
-                player.sendMessage(message);
+            if (nodeType == NodeType.SINK && !energyStorage.canReceive()) {
+                PowerSink.sendMessage("That block can not receive energy.", player);
                 return;
-            } else if(nodeType == NodeType.SOURCE && !energyStorage.canExtract()) {
-                Text message = Text.builder("[PowerSink] That block can not send energy.").build();
-                player.sendMessage(message);
+            } else if (nodeType == NodeType.SOURCE && !energyStorage.canExtract()) {
+                PowerSink.sendMessage("That block can not send energy.", player);
                 return;
             }
-            PowerSink.getLogger().debug("\tEnergy stored: {}", energyStorage.getEnergyStored());
-            PowerSink.getLogger().debug("\tMax energy stored: {}", energyStorage.getMaxEnergyStored());
-            PowerSink.getLogger().debug("\tcan extract: {}", energyStorage.canExtract());
-            PowerSink.getLogger().debug("\tcan receive: {}", energyStorage.canReceive());
-        } else if (energyType == EnergyType.MEKANISM) {
-            IStrictEnergyStorage energyStorage = (IStrictEnergyStorage) EnergyCapability.getCapabilityInterface(tileEntity, energyType).get();
-            PowerSink.getLogger().debug("\tEnergy stored: {}", energyStorage.getEnergy());
-            PowerSink.getLogger().debug("\tMax energy stored: {}", energyStorage.getMaxEnergy());
         }
+//            PowerSink.getLogger().debug("\tEnergy stored: {}", energyStorage.getEnergyStored());
+//            PowerSink.getLogger().debug("\tMax energy stored: {}", energyStorage.getMaxEnergyStored());
+//            PowerSink.getLogger().debug("\tcan extract: {}", energyStorage.canExtract());
+//            PowerSink.getLogger().debug("\tcan receive: {}", energyStorage.canReceive());
+//        } else if (energyType == EnergyType.MEKANISM) {
+//            IStrictEnergyStorage energyStorage = (IStrictEnergyStorage) EnergyCapability.getCapabilityInterface(tileEntity, energyType).get();
+//            PowerSink.getLogger().debug("\tEnergy stored: {}", energyStorage.getEnergy());
+//            PowerSink.getLogger().debug("\tMax energy stored: {}", energyStorage.getMaxEnergy());
+//        }
 
         EnergyNode energyNode = null;
         switch (nodeType) {
@@ -105,11 +112,10 @@ public class SpongeLeftClickListener {
                 break;
         }
 
-        if(!PowerSinkData.getEnergyNodes().containsKey(location)) {
+        if(!PowerSinkData.hasEnergyNode(location)) {
             PowerSinkData.addEnergyNode(energyNode);
         } else {
-            Text message = Text.builder("[PowerSink] That block is already registered.").build();
-            player.sendMessage(message);
+            PowerSink.sendMessage("That block is already registered.", player);
         }
     }
 }

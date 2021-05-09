@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.config.ConfigDir;
+import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.EventContext;
@@ -11,13 +12,13 @@ import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.event.game.GameReloadEvent;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
-import org.spongepowered.api.event.game.state.GameStartingServerEvent;
 import org.spongepowered.api.event.game.state.GameStoppingServerEvent;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.EconomyService;
+import org.spongepowered.api.text.Text;
 import tv.voidstar.powersink.energy.EnergyNode;
 import tv.voidstar.powersink.energy.compat.EnergyCapability;
 import tv.voidstar.powersink.event.listener.SpongeBlockBreakEventListener;
@@ -64,7 +65,7 @@ public class PowerSink {
             }
         }
 
-        PowerSinkConfig.init(rootDir); // TODO: do configs
+        PowerSinkConfig.init(rootDir);
         PowerSinkData.init(rootDir);
 
     }
@@ -149,5 +150,10 @@ public class PowerSink {
             cause = Cause.builder().append(pluginContainerOpt.get()).build(context);
         }
         return cause;
+    }
+
+    public static void sendMessage(String message, Player player) {
+        Text textMessage = Text.builder("[PowerSink] ".concat(message)).build();
+        player.sendMessage(textMessage);
     }
 }

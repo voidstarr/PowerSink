@@ -37,8 +37,6 @@ public class PowerSinkData {
 
         TypeSerializerCollection serializers = TypeSerializerCollection.defaults().newChild();
         serializers.register(TypeToken.of(EnergyType.class), new EnergyTypeSerializer());
-        //serializers.register(TypeToken.of(EnergySink.class), new EnergySinkSerializer());
-        //serializers.register(TypeToken.of(EnergySource.class), new EnergySourceSerializer());
         options = ConfigurationOptions.defaults().withSerializers(serializers);
 
         loader = HoconConfigurationLoader.builder().setFile(energynodesFile).build();
@@ -103,12 +101,16 @@ public class PowerSinkData {
         save();
     }
 
-    public static Map<Location<World>, EnergyNode> getEnergyNodes() {
-        return energyNodes;
+    public static boolean hasEnergyNode(Location<World> location) {
+        return  energyNodes.containsKey(location);
     }
 
     public static void reload() {
         energyNodes.clear();
         load();
+    }
+
+    public static Map<Location<World>, EnergyNode> getEnergyNodes() {
+        return energyNodes;
     }
 }

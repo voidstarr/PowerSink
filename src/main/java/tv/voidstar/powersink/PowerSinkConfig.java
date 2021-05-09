@@ -38,6 +38,7 @@ public class PowerSinkConfig {
         configs.getNode("activationItems").setComment("What item a player should hold to register a sink or source.");
         getValOrSetDefault(configs.getNode("activationItems", "source"),"minecraft:redstone");
         getValOrSetDefault(configs.getNode("activationItems", "sink"), "minecraft:glowstone_dust");
+        getValOrSetDefault(configs.getNode("activationItems", "remove"), "minecraft:bedrock");
 
         configs.getNode("rates").setComment("How money given/withdrawn should be calculated.");
         getValOrSetDefault(configs.getNode("rates", "maxEnergyTransaction"),10000);
