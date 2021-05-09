@@ -20,7 +20,6 @@ public class EnergyCapability {
 
     @CapabilityInject(IStrictEnergyStorage.class)
     public static void registerMekanismIStrictEnergyStorage(Capability<?> capability) {
-        PowerSink.getLogger().info("Enable Mekanism integration");
         energyCapabilities.put(EnergyType.MEKANISM, capability);
     }
 
