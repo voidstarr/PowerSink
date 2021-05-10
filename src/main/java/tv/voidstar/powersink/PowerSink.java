@@ -23,6 +23,7 @@ import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageReceiver;
+import scala.collection.immutable.Stream;
 import tv.voidstar.powersink.command.ListExecutor;
 import tv.voidstar.powersink.command.MainExecutor;
 import tv.voidstar.powersink.energy.EnergyNode;
@@ -36,9 +37,10 @@ import java.io.IOException;
 import java.util.Optional;
 
 @Plugin(
-        id = "powersink",
-        name = "PowerSink",
-        version = "0.1.0",
+        id = Constants.PLUGIN_ID,
+        name = Constants.PLUGIN_NAME,
+        version = Constants.PLUGIN_VERSION,
+        description = Constants.PLUGIN_DESCRIPTION,
         dependencies = {@Dependency(id = "mekanism", optional = true)}
 )
 public class PowerSink {
