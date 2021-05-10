@@ -1,5 +1,6 @@
 package tv.voidstar.powersink.energy.compat;
 
+import blusunrize.immersiveengineering.api.energy.immersiveflux.IFluxStorage;
 import mekanism.api.energy.IStrictEnergyStorage;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -21,6 +22,11 @@ public class EnergyCapability {
     @CapabilityInject(IStrictEnergyStorage.class)
     public static void registerMekanismIStrictEnergyStorage(Capability<?> capability) {
         energyCapabilities.put(EnergyType.MEKANISM, capability);
+    }
+
+    @CapabilityInject(IFluxStorage.class)
+    public static void registerImmersiveEngineeringFluxStorage(Capability<?> capability) {
+        energyCapabilities.put(EnergyType.IMMERSIVE_ENGINEERING, capability);
     }
 
     public static void init() {
@@ -86,6 +92,9 @@ public class EnergyCapability {
             case MEKANISM:
                 MekanismCompat.removeEnergyAndPay(tileEntity, energyNode.getPlayerOwner());
                 break;
+            case IMMERSIVE_ENGINEERING:
+                ImmersiveEngineeringCompat.removeEnergyAndPay(tileEntity, energyNode.getPlayerOwner());
+                break;
         }
     }
 
@@ -106,6 +115,9 @@ public class EnergyCapability {
                 break;
             case MEKANISM:
                 MekanismCompat.withdrawPaymentAndAddEnergy(tileEntity, energyNode.getPlayerOwner());
+                break;
+            case IMMERSIVE_ENGINEERING:
+                ImmersiveEngineeringCompat.withdrawPaymentAndAddEnergy(tileEntity, energyNode.getPlayerOwner());
                 break;
         }
     }

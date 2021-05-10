@@ -6,7 +6,6 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.ConfigDir;
-import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.EventContext;
@@ -23,7 +22,6 @@ import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.channel.MessageReceiver;
-import scala.collection.immutable.Stream;
 import tv.voidstar.powersink.command.ListExecutor;
 import tv.voidstar.powersink.command.MainExecutor;
 import tv.voidstar.powersink.energy.EnergyNode;
@@ -41,7 +39,7 @@ import java.util.Optional;
         name = Constants.PLUGIN_NAME,
         version = Constants.PLUGIN_VERSION,
         description = Constants.PLUGIN_DESCRIPTION,
-        dependencies = {@Dependency(id = "mekanism", optional = true)}
+        dependencies = {@Dependency(id = "mekanism", optional = true),@Dependency(id = "immersiveengineering", optional = true)}
 )
 public class PowerSink {
 

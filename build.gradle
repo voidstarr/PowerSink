@@ -1,17 +1,10 @@
 buildscript {
     repositories {
         maven { url = 'https://files.minecraftforge.net/maven' }
-        maven {
-            name = 'sponge'
-            url = 'https://repo.spongepowered.org/repository/maven-public/'
-        }
-        jcenter()
-        mavenCentral()
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:3.+'
     }
-
 }
 
 plugins {
@@ -40,6 +33,7 @@ dependencies {
     api 'org.spongepowered:spongeapi:7.3.0'
     annotationProcessor 'org.spongepowered:spongeapi:7.3.0'
     api 'curse.maven:mekanismapi-268560:2835176'
+    api 'curse.maven:immersiveengineering-231951:2974106'
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2854'
 }
 
