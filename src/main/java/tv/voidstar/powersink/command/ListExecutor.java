@@ -32,18 +32,18 @@ public class ListExecutor implements CommandExecutor {
         boolean enableRemove = false;
 
         if (argUser.isPresent()) {
-            if(!src.hasPermission(Constants.LIST_NODES_OTHER_PERMISSION)) {
+            if (!src.hasPermission(Constants.LIST_NODES_OTHER_PERMISSION)) {
                 src.sendMessage(Text.of("you don't have permission to list other player's energynodes."));
                 return CommandResult.success();
             }
             searchPlayer = argUser.get().getUniqueId();
             enableRemove = src.hasPermission(Constants.REMOVE_NODES_OTHER_PERMISSION);
         } else {
-            if(!src.hasPermission(Constants.LIST_NODES_SELF_PERMISSION)) {
+            if (!src.hasPermission(Constants.LIST_NODES_SELF_PERMISSION)) {
                 src.sendMessage(Text.of("you don't have permission to list your energynodes."));
                 return CommandResult.success();
             }
-            if(src instanceof Player) {
+            if (src instanceof Player) {
                 searchPlayer = ((Player) src).getUniqueId();
                 enableRemove = src.hasPermission(Constants.REMOVE_NODES_SELF_PERMISSION);
             }
@@ -75,7 +75,7 @@ public class ListExecutor implements CommandExecutor {
                 .onHover(TextActions.showText(Text.of(energyNode.getLocation())));
 
         Text locationText = null;
-        if(teleport) {
+        if (teleport) {
             String teleportCommand = "/tp "
                     + energyNode.getLocation().getX() + " "
                     + energyNode.getLocation().getY() + " "
@@ -93,7 +93,7 @@ public class ListExecutor implements CommandExecutor {
                             TextActions.executeCallback((cmdSrc) -> {
                                 PowerSinkData.delEnergyNode(energyNode.getLocation());
                                 Text.builder().append(Text.of("Removed "), owner, Text.of("'s Energy"), nodeType).build();
-                                PowerSink.sendMessage(Text.builder().append(Text.of("Removed "), owner, Text.of("'s Energy"), nodeType).build().toPlain(), (Player) cmdSrc);
+                                PowerSink.sendMessage(Text.builder().append(Text.of("Removed "), owner, Text.of("'s Energy"), nodeType).build().toPlain(), cmdSrc);
                             })
                     )
                     .onHover(TextActions.showText(Text.of("Remove this node.")))
