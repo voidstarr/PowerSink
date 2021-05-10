@@ -1,6 +1,5 @@
 package tv.voidstar.powersink.event.listener;
 
-import mekanism.api.energy.IStrictEnergyStorage;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.DimensionManager;
@@ -16,9 +15,9 @@ import tv.voidstar.powersink.*;
 import tv.voidstar.powersink.energy.EnergyNode;
 import tv.voidstar.powersink.energy.EnergySink;
 import tv.voidstar.powersink.energy.EnergySource;
+import tv.voidstar.powersink.energy.NodeType;
 import tv.voidstar.powersink.energy.compat.EnergyCapability;
 import tv.voidstar.powersink.energy.compat.EnergyType;
-import tv.voidstar.powersink.event.NodeType;
 
 import java.util.Optional;
 
@@ -26,25 +25,25 @@ public class SpongeLeftClickListener {
     @Listener
     public void onPlayerInteractBlock(InteractBlockEvent.Primary event, @First Player player) {
         Optional<ItemStack> heldItemOpt = player.getItemInHand(event.getHandType());
-        if(!heldItemOpt.isPresent()) return;
+        if (!heldItemOpt.isPresent()) return;
         String heldItemString = heldItemOpt.get().getType().getName();
 
         boolean removeNode = false;
         NodeType nodeType = null;
-        if(heldItemString.equals(PowerSinkConfig.getNode("activationItems", "sink").getString())) {
-            if(!player.hasPermission(Constants.SETUP_SINK_PERMISSION)) {
+        if (heldItemString.equals(PowerSinkConfig.getNode("activationItems", "sink").getString())) {
+            if (!player.hasPermission(Constants.SETUP_SINK_PERMISSION)) {
                 PowerSink.sendMessage("You don't have permission to register a sink.", player);
                 return;
             }
             nodeType = NodeType.SINK;
-        } else if(heldItemString.equals(PowerSinkConfig.getNode("activationItems", "source").getString())) {
-            if(!player.hasPermission(Constants.SETUP_SOURCE_PERMISSION)) {
+        } else if (heldItemString.equals(PowerSinkConfig.getNode("activationItems", "source").getString())) {
+            if (!player.hasPermission(Constants.SETUP_SOURCE_PERMISSION)) {
                 PowerSink.sendMessage("You don't have permission to register a source.", player);
                 return;
             }
             nodeType = NodeType.SOURCE;
         } else if (heldItemString.equals(PowerSinkConfig.getNode("activationItems", "remove").getString())) {
-            if(!player.hasPermission(Constants.REMOVE_NODES_PERMISSION)) {
+            if (!player.hasPermission(Constants.REMOVE_NODES_SELF_PERMISSION)) {
                 return;
             }
             removeNode = true;
@@ -53,11 +52,11 @@ public class SpongeLeftClickListener {
         }
 
         Optional<Location<World>> locationOpt = event.getTargetBlock().getLocation();
-        if(!locationOpt.isPresent()) return;
+        if (!locationOpt.isPresent()) return;
         Location<World> location = locationOpt.get();
 
-        if(removeNode) {
-            if(PowerSinkData.hasEnergyNode(location)) {
+        if (removeNode) {
+            if (PowerSinkData.hasEnergyNode(location)) {
                 PowerSinkData.delEnergyNode(location);
             } else {
                 PowerSink.sendMessage("That block is not registered.", player);
@@ -66,23 +65,23 @@ public class SpongeLeftClickListener {
         }
 
         Optional<Integer> dimensionIdOpt = Util.dimensionIDFromSpongeLocation(location);
-        if(!dimensionIdOpt.isPresent()) return;
+        if (!dimensionIdOpt.isPresent()) return;
         BlockPos blockPos = Util.forgeBlockPosFromSpongeLocation(location);
 
         TileEntity tileEntity = DimensionManager.getWorld(dimensionIdOpt.get()).getTileEntity(blockPos);
 
-        if(tileEntity == null) {
+        if (tileEntity == null) {
             return;
         }
 
         EnergyType energyType = EnergyCapability.getEnergyStorageType(tileEntity);
 
-        if (energyType == EnergyType.NONE){
+        if (energyType == EnergyType.NONE) {
             PowerSink.sendMessage("That block is not supported.", player);
             return;
         }
 
-        if(energyType == EnergyType.FORGE) {
+        if (energyType == EnergyType.FORGE) {
             IEnergyStorage energyStorage = (IEnergyStorage) EnergyCapability.getCapabilityInterface(tileEntity, energyType).get();
             if (nodeType == NodeType.SINK && !energyStorage.canReceive()) {
                 PowerSink.sendMessage("That block can not receive energy.", player);
@@ -92,15 +91,6 @@ public class SpongeLeftClickListener {
                 return;
             }
         }
-//            PowerSink.getLogger().debug("\tEnergy stored: {}", energyStorage.getEnergyStored());
-//            PowerSink.getLogger().debug("\tMax energy stored: {}", energyStorage.getMaxEnergyStored());
-//            PowerSink.getLogger().debug("\tcan extract: {}", energyStorage.canExtract());
-//            PowerSink.getLogger().debug("\tcan receive: {}", energyStorage.canReceive());
-//        } else if (energyType == EnergyType.MEKANISM) {
-//            IStrictEnergyStorage energyStorage = (IStrictEnergyStorage) EnergyCapability.getCapabilityInterface(tileEntity, energyType).get();
-//            PowerSink.getLogger().debug("\tEnergy stored: {}", energyStorage.getEnergy());
-//            PowerSink.getLogger().debug("\tMax energy stored: {}", energyStorage.getMaxEnergy());
-//        }
 
         EnergyNode energyNode = null;
         switch (nodeType) {
@@ -112,8 +102,12 @@ public class SpongeLeftClickListener {
                 break;
         }
 
-        if(!PowerSinkData.hasEnergyNode(location)) {
-            PowerSinkData.addEnergyNode(energyNode);
+        if (!PowerSinkData.hasEnergyNode(location)) {
+            if (PowerSinkData.countNodes(player.getUniqueId(), nodeType) < PowerSinkConfig.getNodeLimit(player.getUniqueId(), nodeType)) {
+                PowerSinkData.addEnergyNode(energyNode);
+            } else {
+                PowerSink.sendMessage("Unable to register block. You have reached your node limit.", player);
+            }
         } else {
             PowerSink.sendMessage("That block is already registered.", player);
         }

@@ -27,4 +27,9 @@ public class EnergySource extends EnergyNode {
     public void handleEnergyTick() {
         EnergyCapability.removeEnergyAndPay(this);
     }
+
+    @Override
+    public NodeType getNodeType() {
+        return NodeType.SOURCE;
+    }
 }

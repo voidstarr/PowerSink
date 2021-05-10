@@ -7,9 +7,12 @@ public enum EnergyType {
 
     public static EnergyType fromString(String s) {
         switch (s) {
-            case "forge": return EnergyType.FORGE;
-            case "mekanism": return EnergyType.MEKANISM;
-            default: return EnergyType.NONE;
+            case "forge":
+                return EnergyType.FORGE;
+            case "mekanism":
+                return EnergyType.MEKANISM;
+            default:
+                return EnergyType.NONE;
         }
     }
 

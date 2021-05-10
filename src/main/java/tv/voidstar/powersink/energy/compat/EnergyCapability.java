@@ -16,7 +16,7 @@ import java.util.Optional;
 // rftools powercell, integrated dynamics batteries are compliant with IEnergyStorage forge
 public class EnergyCapability {
 
-    private static Map<EnergyType, Capability<?>> energyCapabilities = new LinkedHashMap<>();
+    private static final Map<EnergyType, Capability<?>> energyCapabilities = new LinkedHashMap<>();
 
     @CapabilityInject(IStrictEnergyStorage.class)
     public static void registerMekanismIStrictEnergyStorage(Capability<?> capability) {
@@ -34,7 +34,7 @@ public class EnergyCapability {
     // TODO: do this better?
     // store capability interface on EnergyNode? how to detect when it changes?
     public static Optional<Object> getCapabilityInterface(TileEntity tileEntity, EnergyType type) {
-        for(EnumFacing facing : EnumFacing.VALUES) {
+        for (EnumFacing facing : EnumFacing.VALUES) {
             for (Map.Entry<EnergyType, Capability<?>> entry : energyCapabilities.entrySet()) {
                 if (tileEntity.hasCapability(entry.getValue(), facing)) {
                     return Optional.ofNullable(tileEntity.getCapability(entry.getValue(), facing));
@@ -50,7 +50,7 @@ public class EnergyCapability {
     }
 
     public static EnergyType getEnergyStorageType(TileEntity tileEntity) {
-        for(EnumFacing facing : EnumFacing.VALUES) {
+        for (EnumFacing facing : EnumFacing.VALUES) {
             for (Map.Entry<EnergyType, Capability<?>> entry : energyCapabilities.entrySet()) {
                 if (tileEntity.hasCapability(entry.getValue(), facing)) {
                     PowerSink.getLogger().debug("TE at {} has {} [{}] on {} side", tileEntity.getPos().toString(), entry.getValue().toString(), entry.getKey().toString(), facing.toString());
@@ -69,12 +69,12 @@ public class EnergyCapability {
 
     public static void removeEnergyAndPay(EnergyNode energyNode) {
         Optional<TileEntity> tileEntityOpt = energyNode.getTileEntity();
-        if(!tileEntityOpt.isPresent()) {
+        if (!tileEntityOpt.isPresent()) {
             PowerSink.getLogger().error(
                     "Unable to process EnergyNode at {} for Player({}). tileEntity not defined.",
                     energyNode.getLocation(),
                     energyNode.getPlayerOwner()
-                    );
+            );
             // TODO: get tile entity or remove offending node
             return;
         }
@@ -91,7 +91,7 @@ public class EnergyCapability {
 
     public static void withdrawPaymentAndAddEnergy(EnergyNode energyNode) {
         Optional<TileEntity> tileEntityOpt = energyNode.getTileEntity();
-        if(!tileEntityOpt.isPresent()) {
+        if (!tileEntityOpt.isPresent()) {
             PowerSink.getLogger().error(
                     "Unable to process EnergyNode at {} for Player({}). tileEntity not defined.",
                     energyNode.getLocation(),

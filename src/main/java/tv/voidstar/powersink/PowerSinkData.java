@@ -13,6 +13,7 @@ import org.spongepowered.api.world.World;
 import tv.voidstar.powersink.energy.EnergyNode;
 import tv.voidstar.powersink.energy.EnergySink;
 import tv.voidstar.powersink.energy.EnergySource;
+import tv.voidstar.powersink.energy.NodeType;
 import tv.voidstar.powersink.energy.compat.EnergyType;
 import tv.voidstar.powersink.serializer.EnergyTypeSerializer;
 
@@ -26,13 +27,13 @@ public class PowerSinkData {
     private static ConfigurationNode energyNodesList;
     private static ConfigurationOptions options;
     private static @NonNull HoconConfigurationLoader loader;
-    private static Map<Location<World>, EnergyNode> energyNodes = new HashMap<>();
-    private static Hashtable<UUID, Stack<Location<World>>> storedLocations = new Hashtable<>();
-    private static Currency currency = null;
+    private static final HashMap<Location<World>, EnergyNode> energyNodes = new LinkedHashMap<>();
+    private static final Hashtable<UUID, Stack<Location<World>>> storedLocations = new Hashtable<>();
+    private static final Currency currency = null;
 
     public static void init(File rootDir) throws IOException {
         energynodesFile = new File(rootDir, "energynodes.conf");
-        if(!energynodesFile.exists())
+        if (!energynodesFile.exists())
             energynodesFile.createNewFile();
 
         TypeSerializerCollection serializers = TypeSerializerCollection.defaults().newChild();
@@ -50,12 +51,12 @@ public class PowerSinkData {
                 String energyNodeClassName = energyNode.getNode("type").getString();
                 Class energyNodeClass = Class.forName(energyNodeClassName);
                 PowerSink.getLogger().debug("class: {}", energyNodeClass);
-                if(energyNodeClassName == null) continue;
-                if(energyNodeClassName.contains("EnergySource")) {
+                if (energyNodeClassName == null) continue;
+                if (energyNodeClassName.contains("EnergySource")) {
                     EnergySource node = (EnergySource) energyNode.getNode("energyNode").getValue(TypeToken.of(Class.forName(energyNodeClassName)));
                     node.fetchTileEntity();
                     energyNodes.put(node.getLocation(), node);
-                } else if(energyNodeClassName.contains("EnergySink")) {
+                } else if (energyNodeClassName.contains("EnergySink")) {
                     EnergySink node = (EnergySink) energyNode.getNode("energyNode").getValue(TypeToken.of(Class.forName(energyNodeClassName)));
                     node.fetchTileEntity();
                     energyNodes.put(node.getLocation(), node);
@@ -72,9 +73,9 @@ public class PowerSinkData {
             ConfigurationNode energyNodeNode = energyNodesList.getNode("energyNodes").appendListNode();
             try {
                 PowerSink.getLogger().debug("serialize {}", energyNode.getClass().getName());
-                if(energyNode instanceof EnergySource) {
+                if (energyNode.getNodeType() == NodeType.SOURCE) {
                     energyNodeNode.getNode("energyNode").setValue(TypeToken.of(EnergySource.class), (EnergySource) energyNode);
-                } else if(energyNode instanceof EnergySink) {
+                } else if (energyNode.getNodeType() == NodeType.SINK) {
                     energyNodeNode.getNode("energyNode").setValue(TypeToken.of(EnergySink.class), (EnergySink) energyNode);
                 } else {
                     continue;
@@ -102,7 +103,21 @@ public class PowerSinkData {
     }
 
     public static boolean hasEnergyNode(Location<World> location) {
-        return  energyNodes.containsKey(location);
+        return energyNodes.containsKey(location);
+    }
+
+    public static int countNodes(UUID player, NodeType nodeType) {
+        int count = 0;
+        for (EnergyNode energyNode : energyNodes.values()) {
+            if (energyNode.getPlayerOwner().equals(player)) {
+                if (nodeType == null) {
+                    ++count;
+                } else if (energyNode.getNodeType() == nodeType) {
+                    ++count;
+                }
+            }
+        }
+        return count;
     }
 
     public static void reload() {
@@ -111,6 +126,6 @@ public class PowerSinkData {
     }
 
     public static Map<Location<World>, EnergyNode> getEnergyNodes() {
-        return energyNodes;
+        return Collections.synchronizedMap(energyNodes);
     }
 }

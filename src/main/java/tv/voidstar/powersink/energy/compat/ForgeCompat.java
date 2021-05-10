@@ -18,7 +18,7 @@ import java.util.UUID;
 public class ForgeCompat {
     public static void removeEnergyAndPay(TileEntity tileEntity, UUID playerOwner) {
         Optional<Object> energyStorageOpt = EnergyCapability.getCapabilityInterface(tileEntity, EnergyType.MEKANISM);
-        if(!energyStorageOpt.isPresent()) {
+        if (!energyStorageOpt.isPresent()) {
             PowerSink.getLogger().error("Unable to get Energy Storage Interface for block at {}", tileEntity.getPos().toString());
             return;
         }
@@ -30,19 +30,19 @@ public class ForgeCompat {
         Account acc = PowerSink.getEcoService().getOrCreateAccount(playerOwner).get();
         TransactionResult result = acc.deposit(PowerSink.getCurrency(), moneyToDeposit, PowerSink.getCause());
 
-        if(result.getResult() == ResultType.ACCOUNT_NO_SPACE) {
+        if (result.getResult() == ResultType.ACCOUNT_NO_SPACE) {
             Sponge.getGame().getServer().getPlayer(playerOwner).ifPresent((player -> {
                 player.sendMessage(Text.builder("account full. unable to deposit funds.").build());
             }));
             // TODO: disable the offending player's energy sources
-         } else {
+        } else {
             energyStorage.extractEnergy(energyToExtract, false);
         }
     }
 
     public static void withdrawPaymentAndAddEnergy(TileEntity tileEntity, UUID playerOwner) {
         Optional<Object> energyStorageOpt = EnergyCapability.getCapabilityInterface(tileEntity, EnergyType.MEKANISM);
-        if(!energyStorageOpt.isPresent()) {
+        if (!energyStorageOpt.isPresent()) {
             PowerSink.getLogger().error("Unable to get Energy Storage Interface for block at {}", tileEntity.getPos().toString());
             return;
         }
@@ -54,7 +54,7 @@ public class ForgeCompat {
         Account acc = PowerSink.getEcoService().getOrCreateAccount(playerOwner).get();
         TransactionResult result = acc.withdraw(PowerSink.getCurrency(), moneyToWithdraw, PowerSink.getCause());
 
-        if(result.getResult() == ResultType.ACCOUNT_NO_FUNDS) {
+        if (result.getResult() == ResultType.ACCOUNT_NO_FUNDS) {
             Sponge.getGame().getServer().getPlayer(playerOwner).ifPresent((player -> {
                 player.sendMessage(Text.builder("not enough funds. unable to give energy").build());
             }));

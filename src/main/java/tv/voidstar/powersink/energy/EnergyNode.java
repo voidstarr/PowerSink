@@ -72,4 +72,6 @@ public abstract class EnergyNode {
 
     public abstract void handleEnergyTick();
 
+    public abstract NodeType getNodeType();
+
 }

@@ -10,9 +10,9 @@ import java.util.Optional;
 
 public class Util {
     public static Optional<Location<World>> spongeLocationFromForgeBlockPos(BlockPos blockPos, int dimension) {
-        for (World w: Sponge.getGame().getServer().getWorlds()) {
+        for (World w : Sponge.getGame().getServer().getWorlds()) {
             Optional<Integer> wDim = w.getProperties().getAdditionalProperties().getInt(DataQuery.of("SpongeData", "dimensionId"));
-            if(wDim.isPresent() && wDim.get() == dimension)
+            if (wDim.isPresent() && wDim.get() == dimension)
                 return Optional.of(w.getLocation(blockPos.getX(), blockPos.getY(), blockPos.getZ()));
         }
         return Optional.empty();

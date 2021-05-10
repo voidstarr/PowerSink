@@ -20,12 +20,17 @@ public class EnergySink extends EnergyNode {
         super(location, playerOwner, energyType, tileEntity);
     }
 
-    public EnergySink(){
+    public EnergySink() {
 
     }
 
     @Override
     public void handleEnergyTick() {
         EnergyCapability.withdrawPaymentAndAddEnergy(this);
+    }
+
+    @Override
+    public NodeType getNodeType() {
+        return NodeType.SINK;
     }
 }
