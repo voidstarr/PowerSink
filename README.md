@@ -1,4 +1,7 @@
 # PowerSink
+
+### [Discord](https://discord.gg/eeZbM9umBy)
+
 Sponge API 7.3.x Plugin that allows players to pay for energy, or earn money selling energy.
 
 This plugin is in a rough proof of concept state.
