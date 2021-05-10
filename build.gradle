@@ -36,6 +36,7 @@ minecraft {
 
 dependencies {
     api 'org.spongepowered:spongeapi:7.3.0'
+    annotationProcessor 'org.spongepowered:spongeapi:7.3.0'
     //api 'curse.maven:mekanism-api-268560:2835176'
     api files('libs/Mekanism-1.12.2-9.8.3.390-api.jar')
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2854'
