@@ -7,7 +7,11 @@ import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import ninja.leaping.configurate.objectmapping.serialize.TypeSerializerCollection;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.service.economy.Currency;
+import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.action.TextActions;
+import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 import tv.voidstar.powersink.energy.EnergyNode;
@@ -94,12 +98,36 @@ public class PowerSinkData {
 
     public static void addEnergyNode(EnergyNode node) {
         energyNodes.put(node.getLocation(), node);
+        notifyPlayerNodeModified(node, "created");
         save();
     }
 
     public static void delEnergyNode(Location<World> location) {
+        EnergyNode node = energyNodes.get(location);
         energyNodes.remove(location);
+        notifyPlayerNodeModified(node, "deleted");
         save();
+    }
+
+    public static void notifyPlayerNodeModified(EnergyNode node, String verb) {
+        String nodeType = node.getNodeType().toString();
+        nodeType = "Energy".concat(nodeType.substring(0, 1).toUpperCase().concat(nodeType.substring(1)));
+
+        PowerSink.getLogger().info("{} at {} {}.", nodeType, node.getLocation(), verb);
+        Text nodeTextWithLocation = Text.builder(nodeType.concat(" "))
+                .color(TextColors.YELLOW)
+                .onHover(TextActions.showText(Text.of(node.getLocation())))
+                .build();
+
+        Text ownedOverAllowed = Text.builder(
+                Integer.toString(PowerSinkData.countNodes(node.getPlayerOwner(), node.getNodeType()))
+                .concat("/")
+                .concat(Integer.toString(PowerSinkConfig.getNodeLimit(node.getPlayerOwner(), node.getNodeType())))
+        ).build();
+
+        Sponge.getServer().getPlayer(node.getPlayerOwner()).ifPresent((player -> {
+            player.sendMessage(Text.of("[PowerSink] ", nodeTextWithLocation, Text.of(verb.concat(". "), ownedOverAllowed)));
+        }));
     }
 
     public static boolean hasEnergyNode(Location<World> location) {

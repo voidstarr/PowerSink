@@ -10,7 +10,6 @@ import tv.voidstar.powersink.PowerSinkData;
 public class SpongeBlockBreakEventListener {
     @Listener
     public void onBlockBreak(ChangeBlockEvent.Break event, @First Player player) {
-        PowerSink.getLogger().info("Player({}) broke block", player);
         event.getTransactions().forEach((blockSnapshotTransaction -> {
             blockSnapshotTransaction.getFinal().getLocation().ifPresent((location -> {
                 PowerSinkData.delEnergyNode(location);
